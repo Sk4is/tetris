@@ -39,4 +39,65 @@ function drawBlock(x, y, color) {
     ctx.fillRect(x * SIZE, y * SIZE, SIZE, SIZE);
     ctx.strokeStyle = "black";
     ctx.strokeReact(x * SIZE, y * SIZE, SIZE, SIZE);
-} 
+}
+
+function drawPiece() {
+    currentPiece.shape.forEach((row, dy) => row.forEach((value, dx) => {
+        if(value) drawBlock(currentPiece.x + dx, currentPiece.y + dy, "red");
+    }))
+}
+
+function movePiece(dx, dy) {
+    if(!collides(dx, dy)) {
+        currentPiece.x += dx;
+        currentPiece.y += dy;
+        draw();
+    }
+}
+
+function rotatePiece() {
+    const rotated = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i].reverse()));
+    if(collides(0, 0, rotated)) {
+        gsap.to(currentPiece, { duration: 0.1, rotation: 360 });
+        currentPiece.shape = rotated;
+        draw();
+    }
+}
+
+function mergePiece() {
+    currentPiece.shape.forEach((row, dy) => row.forEach((value, dx) => {
+        if(value) board[currentPiece.y + dy][currentPiece.x + dx] = 1;
+    }));
+    fillLines();
+    generatePiece();
+}
+
+function fillLines() {
+    let linesClear = 0;
+    board.forEach((row, y) => {
+        if(row.every(value => value)) {
+            board.splice(y, 1);
+            board.unshift(Array(COLS).fill(0));
+            linesClear++;
+        }
+    });
+    if(linesClear > 0) {
+        let points = linesClear === 1 ? 100 : linesClear === 2 ? 300 : linesClear === 3 ? 500 : 800;
+        updateScore(points);
+    }
+}
+
+function updateScore(points) {
+    score += points;
+    scoreContainer.textContent = score;
+    if(score > highScore) {
+        highScore = score;
+        highScoreContainer.textContent = highScore;
+        localStorage.setItem("highScore", highScore);
+    }
+}
+
+function draw() {
+    drawBoard();
+    drawPiece();
+}
